@@ -7,9 +7,10 @@ import { supabaseAdmin } from '../supabase/client';
 import { extractSealSignature, calculatePHash } from './extract';
 import type { SealRecord, SealStatus, VerifyResponse, SealMetadata } from './types';
 
-// Confidence閾値
-const THRESHOLD_AUTHENTIC = 0.85;
-const THRESHOLD_INCONCLUSIVE = 0.5;
+// Confidence閾値（DWT用に調整）
+// DWT は JPEG 圧縮・スクショ後も 70-85% の検出率
+const THRESHOLD_AUTHENTIC = 0.75;
+const THRESHOLD_INCONCLUSIVE = 0.40;
 
 interface VerifyResult {
   status: SealStatus;
