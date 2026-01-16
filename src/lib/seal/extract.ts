@@ -7,7 +7,8 @@
 
 import crypto from 'crypto';
 import sharp from 'sharp';
-import ExifParser from 'exif-parser';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const ExifParser = require('exif-parser');
 
 // 環境変数から秘密鍵を取得
 const SEAL_EMBED_KEY = process.env.SEAL_EMBED_KEY || '';
