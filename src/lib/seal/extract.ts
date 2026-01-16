@@ -1,49 +1,68 @@
 /**
  * Aether Seal Extraction
- * 画像から不可視署名を抽出する（簡易実装）
+ * 画像から不可視署名を抽出する
  *
- * 注: 本番環境ではRust/WASMによるDWT+Spread Spectrum実装が必要
- * この実装はPoC用の簡易版（pHash + DB照合）
+ * PoC実装: EXIFメタデータからsealIdを読み取る
  */
 
 import crypto from 'crypto';
+import sharp from 'sharp';
+import ExifParser from 'exif-parser';
 
 // 環境変数から秘密鍵を取得
 const SEAL_EMBED_KEY = process.env.SEAL_EMBED_KEY || '';
 
 /**
- * 画像バッファからシグネチャを抽出（簡易実装）
- * 本来はDWT+Spread Spectrumで埋め込まれた透かしを抽出
- * この実装ではpHashベースの照合を行う
+ * 画像バッファからシグネチャを抽出
+ * EXIFメタデータに埋め込まれたsealIdを読み取る
  */
 export async function extractSealSignature(imageBuffer: Buffer): Promise<{
   sealId: string | null;
   confidence: number;
   raw: Buffer | null;
 }> {
-  try {
-    // 画像のハッシュを計算（簡易的なフィンガープリント）
-    const hash = crypto.createHash('sha256').update(imageBuffer).digest();
+  if (!SEAL_EMBED_KEY) {
+    console.warn('[seal/extract] SEAL_EMBED_KEY not configured');
+    return { sealId: null, confidence: 0, raw: null };
+  }
 
-    // SEAL_EMBED_KEYを使用してHMACを計算
-    if (!SEAL_EMBED_KEY) {
-      console.warn('[seal/extract] SEAL_EMBED_KEY not configured');
-      return { sealId: null, confidence: 0, raw: null };
+  try {
+    const metadata = await sharp(imageBuffer).metadata();
+
+    // EXIFからseal情報を読み取り
+    if (metadata.exif) {
+      const parser = ExifParser.create(imageBuffer);
+      const result = parser.parse();
+
+      const description = result.tags?.ImageDescription;
+      if (description) {
+        try {
+          const sealData = JSON.parse(description);
+          if (sealData.owm_seal_id) {
+            // 署名を検証
+            const hmac = crypto.createHmac('sha256', SEAL_EMBED_KEY);
+            hmac.update(sealData.owm_seal_id);
+            hmac.update(`${metadata.width}x${metadata.height}`);
+            const expectedSig = hmac.digest().toString('base64').substring(0, 16);
+
+            const confidence = sealData.owm_seal_sig === expectedSig ? 0.98 : 0.5;
+
+            console.log(`[seal/extract] Found seal: ${sealData.owm_seal_id.substring(0, 12)}... (confidence: ${confidence})`);
+
+            return {
+              sealId: sealData.owm_seal_id,
+              confidence,
+              raw: Buffer.from(sealData.owm_seal_id, 'base64'),
+            };
+          }
+        } catch {
+          // JSON parse失敗は無視
+        }
+      }
     }
 
-    const hmac = crypto.createHmac('sha256', SEAL_EMBED_KEY);
-    hmac.update(hash);
-    const signature = hmac.digest();
-
-    // 最初の16バイトをseal_idとして使用
-    const sealIdBytes = signature.subarray(0, 16);
-    const sealId = sealIdBytes.toString('base64');
-
-    return {
-      sealId,
-      confidence: 0.95, // 簡易実装では固定値
-      raw: sealIdBytes
-    };
+    console.log('[seal/extract] No seal found in image');
+    return { sealId: null, confidence: 0, raw: null };
   } catch (error) {
     console.error('[seal/extract] Failed to extract signature:', error);
     return { sealId: null, confidence: 0, raw: null };
