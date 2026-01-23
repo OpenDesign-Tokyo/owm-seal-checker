@@ -44,9 +44,9 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
     <div
       {...getRootProps()}
       className={`
-        relative border-2 border-dashed rounded-2xl p-8 transition-all cursor-pointer
-        ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-zinc-300 dark:border-zinc-700'}
-        ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-zinc-50 dark:hover:bg-zinc-900'}
+        relative border-2 border-dashed rounded-2xl p-8 transition-all cursor-pointer bg-[#0D0D0D]
+        ${isDragActive ? 'border-[#4ECDC4] bg-[#4ECDC4]/5' : 'border-[#333333]'}
+        ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#4ECDC4]/50 hover:bg-[#0D0D0D]'}
       `}
     >
       <input {...getInputProps()} />
@@ -56,17 +56,17 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
           <img
             src={preview}
             alt="Preview"
-            className="max-w-full max-h-64 rounded-lg shadow-lg"
+            className="max-w-full max-h-64 rounded-lg shadow-lg shadow-black/50"
           />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-[#666666]">
             {isLoading ? 'Verifying...' : 'Drop another image to replace'}
           </p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 py-8">
-          <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-[#1A1A1A] flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-zinc-400"
+              className="w-8 h-8 text-[#4ECDC4]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -80,10 +80,10 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
             </svg>
           </div>
           <div className="text-center">
-            <p className="text-lg font-medium text-zinc-700 dark:text-zinc-200">
+            <p className="text-lg font-medium text-[#E0E0E0]">
               {isDragActive ? 'Drop the image here' : 'Drag & drop an image'}
             </p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            <p className="text-sm text-[#666666] mt-1">
               or click to select (JPEG, PNG, WebP up to 10MB)
             </p>
           </div>
@@ -91,10 +91,10 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
       )}
 
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-black/80 rounded-2xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#050505]/90 rounded-2xl">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            <div className="w-10 h-10 border-4 border-[#4ECDC4] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-medium text-[#E0E0E0]">
               Verifying authenticity...
             </p>
           </div>
