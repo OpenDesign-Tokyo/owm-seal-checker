@@ -51,7 +51,9 @@ export function VerifyResult({
                 Inconclusive
               </h3>
               <p className="text-sm text-[#666666]">
-                改変が大きいか品質が不足しており、判定できません
+                {confidence >= 0.75 && !metadata
+                  ? '署名は検出されましたが、OWM台帳に登録がありません'
+                  : '改変が大きいか品質が不足しており、判定できません'}
               </p>
             </div>
           </>
