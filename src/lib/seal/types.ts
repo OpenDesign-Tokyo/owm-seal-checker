@@ -5,6 +5,8 @@
 
 export type SealStatus = 'authentic' | 'inconclusive' | 'not_found' | 'revoked';
 
+export type LicenseType = 'standard' | 'cc_by' | 'cc_by_nc' | 'all_rights_reserved' | null;
+
 export interface SealMetadata {
   sealId: string;
   createdAt: string;
@@ -22,6 +24,11 @@ export interface SealMetadata {
     modelName: string | null;
     pipelineMode: string;
   };
+  license: {
+    type: LicenseType;
+    label: string;
+    description: string;
+  } | null;
 }
 
 export interface VerifyResponse {

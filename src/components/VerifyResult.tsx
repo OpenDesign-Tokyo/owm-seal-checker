@@ -157,6 +157,31 @@ export function VerifyResult({
               </span>
             </div>
           </div>
+
+          {/* License Info */}
+          {metadata.license && (
+            <div className="mt-4 pt-4 border-t border-[#222222]">
+              <div className="flex items-center gap-2 mb-2">
+                {metadata.license.type === 'all_rights_reserved' ? (
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-[#4ECDC4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                )}
+                <span className={`text-sm font-medium ${
+                  metadata.license.type === 'all_rights_reserved' ? 'text-red-400' : 'text-[#4ECDC4]'
+                }`}>
+                  {metadata.license.label}
+                </span>
+              </div>
+              <p className="text-xs text-[#666666]">
+                {metadata.license.description}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

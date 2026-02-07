@@ -4,7 +4,7 @@
  */
 
 import { extractSealSignature, calculatePHash } from './extract';
-import type { SealRecord, SealStatus } from './types';
+import type { SealRecord, SealStatus, LicenseType } from './types';
 
 // Confidence閾値（DWT用に調整）
 // DWT は JPEG 圧縮・スクショ後も 70-85% の検出率
@@ -20,6 +20,7 @@ interface VerifyResult {
   sealId: string | null;
   sealRecord: SealRecord | null;
   displayName: string | null;
+  licenseType: LicenseType;
 }
 
 /**
@@ -43,6 +44,7 @@ async function resolveViaAPI(
     createdAt: string;
   };
   creator?: { displayName: string | null; avatarUrl: string | null } | null;
+  licenseType?: LicenseType;
 } | null> {
   if (!SEAL_CHECKER_API_KEY) {
     console.error('[seal/verify] SEAL_CHECKER_API_KEY is not configured');
@@ -73,7 +75,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
         confidence: 0,
         sealId: null,
         sealRecord: null,
-        displayName: null
+        displayName: null,
+        licenseType: null
       };
     }
 
@@ -96,7 +99,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
           confidence: extracted.confidence,
           sealId: extracted.sealId,
           sealRecord: null,
-          displayName: null
+          displayName: null,
+          licenseType: null
         };
       }
       return {
@@ -104,7 +108,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
         confidence: 0,
         sealId: null,
         sealRecord: null,
-        displayName: null
+        displayName: null,
+        licenseType: null
       };
     }
 
@@ -131,6 +136,9 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
       created_at: seal.createdAt,
     };
 
+    // Get license type from API response
+    const licenseType = result.licenseType || null;
+
     // 4. 取り下げチェック
     if (sealRecord.revoked_at) {
       return {
@@ -138,7 +146,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
         confidence: extracted.confidence,
         sealId: extracted.sealId,
         sealRecord,
-        displayName: null
+        displayName: null,
+        licenseType
       };
     }
 
@@ -152,7 +161,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
         confidence: extracted.confidence,
         sealId: extracted.sealId,
         sealRecord,
-        displayName
+        displayName,
+        licenseType
       };
     }
 
@@ -161,7 +171,8 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
       confidence: extracted.confidence,
       sealId: extracted.sealId,
       sealRecord,
-      displayName
+      displayName,
+      licenseType
     };
   } catch (error) {
     console.error('[seal/verify] Verification failed:', error);
@@ -170,17 +181,51 @@ export async function verifySeal(imageBuffer: Buffer): Promise<VerifyResult> {
       confidence: 0,
       sealId: null,
       sealRecord: null,
-      displayName: null
+      displayName: null,
+      licenseType: null
     };
   }
 }
 
+// License type labels and descriptions
+const LICENSE_INFO: Record<string, { label: string; description: string }> = {
+  standard: {
+    label: 'Standard License',
+    description: 'Commercial use allowed with attribution'
+  },
+  cc_by: {
+    label: 'CC BY（表示）',
+    description: 'Creative Commons Attribution - 表示をすれば商用利用可能'
+  },
+  cc_by_nc: {
+    label: 'CC BY-NC（非商用）',
+    description: 'Creative Commons Attribution-NonCommercial - 非商用のみ'
+  },
+  all_rights_reserved: {
+    label: 'All Rights Reserved',
+    description: '閲覧のみ許可 - 購入・複製不可'
+  }
+};
+
 export function buildVerifyResponse(result: VerifyResult) {
-  const { status, confidence, sealId, sealRecord, displayName } = result;
+  const { status, confidence, sealId, sealRecord, displayName, licenseType } = result;
 
   let metadata = null;
 
   if (sealRecord && sealRecord.visibility !== 'private') {
+    // Build license info
+    let license = null;
+    if (licenseType) {
+      const info = LICENSE_INFO[licenseType];
+      if (info) {
+        license = {
+          type: licenseType,
+          label: info.label,
+          description: info.description
+        };
+      }
+    }
+
     metadata = {
       sealId: sealRecord.seal_id,
       createdAt: sealRecord.created_at,
@@ -197,7 +242,8 @@ export function buildVerifyResponse(result: VerifyResult) {
         modelProvider: sealRecord.model_provider,
         modelName: sealRecord.model_name,
         pipelineMode: sealRecord.pipeline_mode
-      }
+      },
+      license
     };
   }
 
