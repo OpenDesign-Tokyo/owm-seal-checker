@@ -15,7 +15,7 @@ export function VerifyResult({
   certificate,
   isLoadingCert
 }: VerifyResultProps) {
-  const { status, confidence, metadata } = result;
+  const { status, confidence, metadata, matchedByPHash, pHashSimilarity } = result;
 
   return (
     <div className="mt-6 space-y-4">
@@ -48,12 +48,14 @@ export function VerifyResult({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#FACC15]">
-                Inconclusive
+                {matchedByPHash ? 'Similar Image Found' : 'Inconclusive'}
               </h3>
               <p className="text-sm text-[#666666]">
-                {confidence >= 0.75 && !metadata
-                  ? '署名は検出されましたが、OWM台帳に登録がありません'
-                  : '改変が大きいか品質が不足しており、判定できません'}
+                {matchedByPHash
+                  ? `署名は検出できませんでしたが、登録済み画像と${pHashSimilarity?.toFixed(0)}%類似しています`
+                  : confidence >= 0.75 && !metadata
+                    ? '署名は検出されましたが、OWM台帳に登録がありません'
+                    : '改変が大きいか品質が不足しており、判定できません'}
               </p>
             </div>
           </>
@@ -100,7 +102,9 @@ export function VerifyResult({
       {confidence > 0 && (
         <div className="bg-[#0D0D0D] rounded-lg p-4 border border-[#222222]">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-[#666666]">Confidence</span>
+            <span className="text-sm text-[#666666]">
+              {matchedByPHash ? 'Image Similarity' : 'Confidence'}
+            </span>
             <span className="text-sm font-medium text-[#E0E0E0]">{(confidence * 100).toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
@@ -112,6 +116,11 @@ export function VerifyResult({
               style={{ width: `${confidence * 100}%` }}
             />
           </div>
+          {matchedByPHash && (
+            <p className="text-xs text-[#666666] mt-2">
+              ※ 画像の視覚的類似度に基づく推定です
+            </p>
+          )}
         </div>
       )}
 

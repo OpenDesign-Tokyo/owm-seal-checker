@@ -36,6 +36,10 @@ export interface VerifyResponse {
   confidence: number;
   sealId: string | null;
   metadata: SealMetadata | null;
+  /** True if matched by pHash instead of watermark */
+  matchedByPHash?: boolean;
+  /** pHash similarity percentage (0-100) */
+  pHashSimilarity?: number;
 }
 
 export interface AetherSealCertificate {
