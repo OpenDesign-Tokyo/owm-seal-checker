@@ -56,7 +56,7 @@ async function extractViaDwtApi(imageBuffer: Buffer): Promise<ExtractResult | nu
       return null;
     }
 
-    const { detected, seal_id, confidence, transforms } = result.data;
+    const { detected, seal_id, confidence: rawConfidence, transforms } = result.data;
 
     if (!detected || !seal_id) {
       console.log('[seal/extract] DWT API: No watermark detected');
@@ -68,7 +68,9 @@ async function extractViaDwtApi(imageBuffer: Buffer): Promise<ExtractResult | nu
       };
     }
 
-    console.log(`[seal/extract] DWT extracted: ${seal_id.substring(0, 12)}... (confidence: ${(confidence * 100).toFixed(1)}%)`);
+    // Clamp confidence to [0, 1] range - DWT API may return values > 1 with high alpha
+    const confidence = Math.min(1, Math.max(0, rawConfidence));
+    console.log(`[seal/extract] DWT extracted: ${seal_id.substring(0, 12)}... (raw: ${(rawConfidence * 100).toFixed(1)}%, clamped: ${(confidence * 100).toFixed(1)}%)`);
 
     return {
       sealId: seal_id,
