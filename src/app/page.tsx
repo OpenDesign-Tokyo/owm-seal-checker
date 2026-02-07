@@ -126,45 +126,6 @@ export default function Home() {
           />
         )}
 
-        {/* Info Section */}
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
-          <div className="bg-[#0D0D0D] rounded-xl p-5 border border-[#222222]">
-            <div className="w-10 h-10 bg-[#4ECDC4]/10 rounded-lg flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-[#4ECDC4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-[#E0E0E0] mb-1">Authentic</h3>
-            <p className="text-sm text-[#666666]">
-              Image was generated and registered on OWM platform
-            </p>
-          </div>
-
-          <div className="bg-[#0D0D0D] rounded-xl p-5 border border-[#222222]">
-            <div className="w-10 h-10 bg-[#FACC15]/10 rounded-lg flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-[#FACC15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-[#E0E0E0] mb-1">Inconclusive</h3>
-            <p className="text-sm text-[#666666]">
-              Heavy modification or low quality prevents verification
-            </p>
-          </div>
-
-          <div className="bg-[#0D0D0D] rounded-xl p-5 border border-[#222222]">
-            <div className="w-10 h-10 bg-[#666666]/10 rounded-lg flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-[#E0E0E0] mb-1">Not Found</h3>
-            <p className="text-sm text-[#666666]">
-              No OWM signature detected in this image
-            </p>
-          </div>
-        </div>
-
         {/* Disclaimer */}
         <div className="mt-8 p-4 bg-[#0D0D0D] border border-[#222222] rounded-lg">
           <p className="text-xs text-[#666666] text-center">
