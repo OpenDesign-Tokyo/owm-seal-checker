@@ -155,7 +155,6 @@ export function VerifyResult({
               <span className="text-[#666666]">Model</span>
               <span className="text-[#E0E0E0]">
                 {metadata.provenance.modelProvider}
-                {metadata.provenance.modelName && ` / ${metadata.provenance.modelName}`}
               </span>
             </div>
           </div>
