@@ -3,19 +3,16 @@
 import { useState } from 'react';
 import { DropZone } from '@/components/DropZone';
 import { VerifyResult } from '@/components/VerifyResult';
-import type { VerifyResponse, CertificateResponse } from '@/lib/seal/types';
+import type { VerifyResponse } from '@/lib/seal/types';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<VerifyResponse | null>(null);
-  const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
-  const [isLoadingCert, setIsLoadingCert] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelected = async (file: File) => {
     setIsLoading(true);
     setResult(null);
-    setCertificate(null);
     setError(null);
 
     try {
@@ -29,7 +26,7 @@ export default function Home() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Verification failed');
+        throw new Error(data.error || '画像の確認に失敗しました');
       }
 
       const data: VerifyResponse = await response.json();
@@ -38,33 +35,6 @@ export default function Home() {
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleRequestCertificate = async () => {
-    const sealId = result?.seal?.id;
-    if (!sealId) return;
-
-    setIsLoadingCert(true);
-
-    try {
-      const response = await fetch('/api/seal/certificate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sealId })
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to issue certificate');
-      }
-
-      const data: CertificateResponse = await response.json();
-      setCertificate(data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsLoadingCert(false);
     }
   };
 
@@ -81,10 +51,10 @@ export default function Home() {
             </div>
             <div>
               <h1 className="font-semibold text-[#E0E0E0] tracking-wide">
-                OWM Aether Seal
+                OWM シールチェッカー
               </h1>
               <p className="text-xs text-[#666666]">
-                Verify authenticity of OWM assets
+                OWM作品かどうかを確認
               </p>
             </div>
           </div>
@@ -103,10 +73,10 @@ export default function Home() {
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-[#E0E0E0] mb-2 tracking-wide">
-            Verify Image Authenticity
+            画像の真贋を確認
           </h2>
           <p className="text-[#666666]">
-            Check if an image was generated and registered on Open Wardrobe Market
+            Open Wardrobe Market に登録された作品かを確認できます
           </p>
         </div>
 
@@ -119,19 +89,14 @@ export default function Home() {
         )}
 
         {result && (
-          <VerifyResult
-            result={result}
-            onRequestCertificate={handleRequestCertificate}
-            certificate={certificate}
-            isLoadingCert={isLoadingCert}
-          />
+          <VerifyResult result={result} />
         )}
 
         {/* Disclaimer */}
         <div className="mt-8 p-4 bg-[#0D0D0D] border border-[#222222] rounded-lg">
           <p className="text-xs text-[#666666] text-center">
-            Aether Seal verifies that an image was generated and registered on OWM.
-            It does not guarantee copyright ownership or authorship.
+            この確認結果は OWM 上の登録情報との一致を示すものです。
+            著作権や法的な権利関係そのものを保証するものではありません。
           </p>
         </div>
       </main>

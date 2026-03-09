@@ -8,11 +8,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "OWM Aether Seal | Verify Image Authenticity",
-  description: "Verify if an image was generated and registered on Open Wardrobe Market. Check authenticity and get signed certificates.",
+  title: "OWM シールチェッカー | 画像の真贋確認",
+  description: "Open Wardrobe Market に登録された作品かどうかを確認できます。",
   openGraph: {
-    title: "OWM Aether Seal",
-    description: "Verify authenticity of OWM-generated images",
+    title: "OWM シールチェッカー",
+    description: "Open Wardrobe Market の登録作品かを確認",
     type: "website",
   },
 };
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
       </body>

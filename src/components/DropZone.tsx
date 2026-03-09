@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
@@ -53,13 +54,17 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
 
       {preview ? (
         <div className="flex flex-col items-center gap-4">
-          <img
-            src={preview}
-            alt="Preview"
-            className="max-w-full max-h-64 rounded-lg shadow-lg shadow-black/50"
-          />
+          <div className="relative h-64 w-full max-w-sm overflow-hidden rounded-lg shadow-lg shadow-black/50">
+            <Image
+              src={preview}
+              alt="確認画像のプレビュー"
+              fill
+              unoptimized
+              className="object-contain"
+            />
+          </div>
           <p className="text-sm text-[#666666]">
-            {isLoading ? 'Verifying...' : 'Drop another image to replace'}
+            {isLoading ? '確認中です…' : '別の画像を入れると差し替えられます'}
           </p>
         </div>
       ) : (
@@ -81,10 +86,10 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
           </div>
           <div className="text-center">
             <p className="text-lg font-medium text-[#E0E0E0]">
-              {isDragActive ? 'Drop the image here' : 'Drag & drop an image'}
+              {isDragActive ? 'ここに画像をドロップ' : '画像をドラッグ＆ドロップ'}
             </p>
             <p className="text-sm text-[#666666] mt-1">
-              or click to select (JPEG, PNG, WebP up to 10MB)
+              またはクリックして選択（JPEG / PNG / WebP、10MBまで）
             </p>
           </div>
         </div>
@@ -95,7 +100,7 @@ export function DropZone({ onFileSelected, isLoading }: DropZoneProps) {
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-[#4ECDC4] border-t-transparent rounded-full animate-spin" />
             <p className="text-sm font-medium text-[#E0E0E0]">
-              Verifying authenticity...
+              画像を確認しています…
             </p>
           </div>
         </div>
