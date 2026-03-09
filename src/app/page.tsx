@@ -3,16 +3,19 @@
 import { useState } from 'react';
 import { DropZone } from '@/components/DropZone';
 import { VerifyResult } from '@/components/VerifyResult';
-import type { VerifyResponse } from '@/lib/seal/types';
+import type { VerifyResponse, CertificateResponse } from '@/lib/seal/types';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<VerifyResponse | null>(null);
+  const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
+  const [isLoadingCert, setIsLoadingCert] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelected = async (file: File) => {
     setIsLoading(true);
     setResult(null);
+    setCertificate(null);
     setError(null);
 
     try {
@@ -35,6 +38,34 @@ export default function Home() {
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRequestCertificate = async () => {
+    const sealId = result?.seal?.id;
+    if (!sealId) return;
+
+    setIsLoadingCert(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/seal/certificate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sealId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '証明書の発行に失敗しました');
+      }
+
+      setCertificate(data as CertificateResponse);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoadingCert(false);
     }
   };
 
@@ -89,7 +120,12 @@ export default function Home() {
         )}
 
         {result && (
-          <VerifyResult result={result} />
+          <VerifyResult
+            result={result}
+            certificate={certificate}
+            isLoadingCert={isLoadingCert}
+            onRequestCertificate={handleRequestCertificate}
+          />
         )}
 
         {/* Disclaimer */}
