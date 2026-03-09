@@ -42,7 +42,8 @@ export default function Home() {
   };
 
   const handleRequestCertificate = async () => {
-    if (!result?.sealId) return;
+    const sealId = result?.seal?.id;
+    if (!sealId) return;
 
     setIsLoadingCert(true);
 
@@ -50,7 +51,7 @@ export default function Home() {
       const response = await fetch('/api/seal/certificate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sealId: result.sealId })
+        body: JSON.stringify({ sealId })
       });
 
       if (!response.ok) {

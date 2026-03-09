@@ -1,14 +1,14 @@
 /**
  * POST /api/seal/verify
- * 公式検証エンドポイント
+ * Proxy to the official OWM Aether Seal v3 verifier.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySeal, buildVerifyResponse } from '@/lib/seal/verify';
 
 export const runtime = 'nodejs';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const OWM_API_URL = process.env.OWM_API_URL || 'https://open-wardrobe-market.com';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,11 +67,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 検証実行
-    const result = await verifySeal(imageBuffer);
-    const response = buildVerifyResponse(result);
+    const response = await fetch(`${OWM_API_URL}/api/aether/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageBase64: imageBuffer.toString('base64'),
+      }),
+    });
 
-    return NextResponse.json(response, {
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || 'Verification failed', details: data.details || null },
+        { status: response.status, headers: corsHeaders }
+      );
+    }
+
+    return NextResponse.json(data, {
       status: 200,
       headers: corsHeaders
     });

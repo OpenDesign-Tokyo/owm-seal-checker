@@ -3,43 +3,76 @@
  * OWM証明システムの型定義
  */
 
-export type SealStatus = 'authentic' | 'inconclusive' | 'not_found' | 'revoked';
+export type SealStatus =
+  | 'authentic'
+  | 'inconclusive'
+  | 'not_found'
+  | 'revoked'
+  | 'verified'
+  | 'likely_verified'
+  | 'tamper_suspected'
+  | 'unverifiable';
 
 export type LicenseType = 'standard' | 'cc_by' | 'cc_by_nc' | 'all_rights_reserved' | null;
 
-export interface SealMetadata {
-  sealId: string;
-  createdAt: string;
-  creator: {
-    userId: string;
-    displayName: string | null;
-    profileUrl: string | null;
-  };
-  asset: {
-    cdnUrl: string;
-    r2Path: string;
-  };
-  provenance: {
-    modelProvider: string;
-    modelName: string | null;
-    pipelineMode: string;
-  };
-  license: {
-    type: LicenseType;
-    label: string;
-    description: string;
-  } | null;
+export interface AuthenticityFactor {
+  key: string;
+  label: string;
+  value: number;
+  max: number;
+  detail: string;
+}
+
+export interface AuthenticityReport {
+  status: 'verified' | 'likely_verified' | 'tamper_suspected' | 'revoked' | 'unverifiable';
+  score: number;
+  summary: string;
+  factors: AuthenticityFactor[];
 }
 
 export interface VerifyResponse {
+  verified: boolean;
+  success?: boolean;
   status: SealStatus;
-  confidence: number;
-  sealId: string | null;
-  metadata: SealMetadata | null;
-  /** True if matched by pHash instead of watermark */
+  message?: string;
+  message_ja?: string;
+  pHash?: string;
+  confidence?: number;
   matchedByPHash?: boolean;
-  /** pHash similarity percentage (0-100) */
-  pHashSimilarity?: number;
+  pHashSimilarity?: number | null;
+  pHashDistance?: number | null;
+  seal?: {
+    id: string;
+    confidence: number;
+    created_at: string;
+    pipeline_mode: string;
+    model_provider: string;
+    model_name?: string | null;
+    manifest_version?: number | null;
+    authenticity_score?: number | null;
+    verifier_summary?: string | null;
+  } | null;
+  design?: {
+    id: string | null;
+    title: string | null;
+    image_url: string | null;
+  } | null;
+  creator?: {
+    user_id: string;
+    display_name: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+  } | null;
+  license?: {
+    type: LicenseType | string;
+  } | null;
+  lineage?: {
+    rootSealId?: string;
+    generationNumber?: number;
+    ancestorCount?: number;
+    descendantCount?: number;
+  } | null;
+  authenticity?: AuthenticityReport | null;
 }
 
 export interface AetherSealCertificate {

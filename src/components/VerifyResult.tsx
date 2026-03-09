@@ -15,13 +15,34 @@ export function VerifyResult({
   certificate,
   isLoadingCert
 }: VerifyResultProps) {
-  const { status, confidence, metadata, matchedByPHash, pHashSimilarity } = result;
+  const {
+    status,
+    confidence = 0,
+    matchedByPHash,
+    pHashSimilarity,
+    creator,
+    design,
+    license,
+    lineage,
+    authenticity,
+    seal,
+    message_ja,
+  } = result;
+
+  const accent =
+    status === 'verified' || status === 'authentic'
+      ? 'text-[#4ECDC4]'
+      : status === 'likely_verified' || status === 'inconclusive'
+        ? 'text-[#FACC15]'
+        : status === 'revoked'
+          ? 'text-red-500'
+          : 'text-[#999999]';
 
   return (
     <div className="mt-6 space-y-4">
       {/* Status Badge */}
       <div className="flex items-center gap-3">
-        {status === 'authentic' && (
+        {(status === 'authentic' || status === 'verified') && (
           <>
             <div className="w-12 h-12 rounded-full bg-[#4ECDC4]/10 flex items-center justify-center">
               <svg className="w-6 h-6 text-[#4ECDC4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,13 +54,13 @@ export function VerifyResult({
                 Authentic
               </h3>
               <p className="text-sm text-[#666666]">
-                OWMで生成・登録された資産です
+                {message_ja || 'OWMで生成・登録された資産です'}
               </p>
             </div>
           </>
         )}
 
-        {status === 'inconclusive' && (
+        {(status === 'inconclusive' || status === 'likely_verified' || status === 'tamper_suspected') && (
           <>
             <div className="w-12 h-12 rounded-full bg-[#FACC15]/10 flex items-center justify-center">
               <svg className="w-6 h-6 text-[#FACC15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,20 +69,23 @@ export function VerifyResult({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#FACC15]">
-                {matchedByPHash ? 'Similar Image Found' : 'Inconclusive'}
+                {status === 'tamper_suspected'
+                  ? 'Tamper Suspected'
+                  : matchedByPHash
+                    ? 'Similar Image Found'
+                    : 'Inconclusive'}
               </h3>
               <p className="text-sm text-[#666666]">
-                {matchedByPHash
-                  ? `署名は検出できませんでしたが、登録済み画像と${pHashSimilarity?.toFixed(0)}%類似しています`
-                  : confidence >= 0.75 && !metadata
-                    ? '署名は検出されましたが、OWM台帳に登録がありません'
-                    : '改変が大きいか品質が不足しており、判定できません'}
+                {message_ja ||
+                  (matchedByPHash
+                    ? `署名は検出できませんでしたが、登録済み画像と${pHashSimilarity?.toFixed(0)}%類似しています`
+                    : '追加確認を推奨します')}
               </p>
             </div>
           </>
         )}
 
-        {status === 'not_found' && (
+        {(status === 'not_found' || status === 'unverifiable') && (
           <>
             <div className="w-12 h-12 rounded-full bg-[#666666]/10 flex items-center justify-center">
               <svg className="w-6 h-6 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +97,7 @@ export function VerifyResult({
                 Not Found
               </h3>
               <p className="text-sm text-[#666666]">
-                OWMの署名は検出されませんでした
+                {message_ja || 'OWMの署名は検出されませんでした'}
               </p>
             </div>
           </>
@@ -99,80 +123,97 @@ export function VerifyResult({
       </div>
 
       {/* Confidence Score */}
-      {confidence > 0 && (
+      {(confidence > 0 || authenticity) && (
         <div className="bg-[#0D0D0D] rounded-lg p-4 border border-[#222222]">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-[#666666]">
-              {matchedByPHash ? 'Image Similarity' : 'Confidence'}
+              {authenticity ? 'Authenticity Score' : matchedByPHash ? 'Image Similarity' : 'Confidence'}
             </span>
-            <span className="text-sm font-medium text-[#E0E0E0]">{(confidence * 100).toFixed(1)}%</span>
+            <span className={`text-sm font-medium ${accent}`}>
+              {authenticity ? `${authenticity.score}%` : `${(confidence * 100).toFixed(1)}%`}
+            </span>
           </div>
           <div className="h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                confidence >= 0.85 ? 'bg-[#4ECDC4]' :
-                confidence >= 0.5 ? 'bg-[#FACC15]' : 'bg-[#666666]'
+                (authenticity?.score || confidence * 100) >= 85 ? 'bg-[#4ECDC4]' :
+                (authenticity?.score || confidence * 100) >= 60 ? 'bg-[#FACC15]' :
+                status === 'tamper_suspected' ? 'bg-red-500' : 'bg-[#666666]'
               }`}
-              style={{ width: `${confidence * 100}%` }}
+              style={{ width: `${authenticity?.score || confidence * 100}%` }}
             />
           </div>
-          {matchedByPHash && (
+          {authenticity?.summary ? (
+            <p className="text-xs text-[#666666] mt-2">{authenticity.summary}</p>
+          ) : matchedByPHash ? (
             <p className="text-xs text-[#666666] mt-2">
               ※ 画像の視覚的類似度に基づく推定です
             </p>
-          )}
+          ) : null}
         </div>
       )}
 
       {/* Metadata */}
-      {metadata && (
+      {(seal || creator || design) && (
         <div className="bg-[#0D0D0D] rounded-lg p-4 space-y-3 border border-[#222222]">
           <h4 className="font-medium text-[#E0E0E0]">Details</h4>
 
           <div className="grid gap-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-[#666666]">Creator</span>
-              <a
-                href={metadata.creator.profileUrl || '#'}
-                className="text-[#4ECDC4] hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {metadata.creator.displayName || 'Unknown'}
-              </a>
-            </div>
+            {creator && (
+              <div className="flex justify-between">
+                <span className="text-[#666666]">Creator</span>
+                <span className="text-[#E0E0E0]">
+                  {creator.display_name || creator.username || 'Unknown'}
+                </span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span className="text-[#666666]">Registered</span>
-              <span className="text-[#E0E0E0]">
-                {new Date(metadata.createdAt).toLocaleDateString('ja-JP', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
-            </div>
+            {seal?.created_at && (
+              <div className="flex justify-between">
+                <span className="text-[#666666]">Registered</span>
+                <span className="text-[#E0E0E0]">
+                  {new Date(seal.created_at).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span className="text-[#666666]">Pipeline</span>
-              <span className="text-[#E0E0E0]">
-                {metadata.provenance.pipelineMode}
-              </span>
-            </div>
+            {seal?.pipeline_mode && (
+              <div className="flex justify-between">
+                <span className="text-[#666666]">Pipeline</span>
+                <span className="text-[#E0E0E0]">
+                  {seal.pipeline_mode}
+                </span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span className="text-[#666666]">Generated by</span>
-              <span className="text-[#E0E0E0]">
-                OWM AI Design
-              </span>
-            </div>
+            {design?.title && (
+              <div className="flex justify-between gap-4">
+                <span className="text-[#666666]">Design</span>
+                <span className="text-right text-[#E0E0E0]">
+                  {design.title}
+                </span>
+              </div>
+            )}
+
+            {lineage?.generationNumber ? (
+              <div className="flex justify-between">
+                <span className="text-[#666666]">Lineage</span>
+                <span className="text-[#E0E0E0]">
+                  Gen {lineage.generationNumber}
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* License Info */}
-          {metadata.license && (
+          {license?.type && (
             <div className="mt-4 pt-4 border-t border-[#222222]">
               <div className="flex items-center gap-2 mb-2">
-                {metadata.license.type === 'all_rights_reserved' ? (
+                {license.type === 'all_rights_reserved' ? (
                   <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -182,21 +223,38 @@ export function VerifyResult({
                   </svg>
                 )}
                 <span className={`text-sm font-medium ${
-                  metadata.license.type === 'all_rights_reserved' ? 'text-red-400' : 'text-[#4ECDC4]'
+                  license.type === 'all_rights_reserved' ? 'text-red-400' : 'text-[#4ECDC4]'
                 }`}>
-                  {metadata.license.label}
+                  {license.type}
                 </span>
               </div>
               <p className="text-xs text-[#666666]">
-                {metadata.license.description}
+                利用条件は OWM 内の表示とライセンス設定に従います。
               </p>
             </div>
           )}
+
+          {authenticity?.factors?.length ? (
+            <div className="mt-4 pt-4 border-t border-[#222222] space-y-2">
+              <h5 className="text-sm font-medium text-[#E0E0E0]">Verifier Factors</h5>
+              <div className="grid gap-2">
+                {authenticity.factors.slice(0, 4).map((factor) => (
+                  <div key={factor.key} className="rounded-lg border border-[#222222] bg-[#111111] px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-[#BDB6AD]">{factor.label}</span>
+                      <span className="text-xs text-[#E0E0E0]">{factor.value}/{factor.max}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-5 text-[#7F7A73]">{factor.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 
       {/* Certificate Button */}
-      {status === 'authentic' && !certificate && (
+      {(status === 'authentic' || status === 'verified') && !certificate && seal?.id && (
         <button
           onClick={onRequestCertificate}
           disabled={isLoadingCert}
