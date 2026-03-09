@@ -27,13 +27,24 @@ export function VerifyResult({
     authenticity,
     seal,
     message_ja,
+    confidence_bucket,
+    reason_codes,
+    unsupported_cases,
+    lineage_state,
+    planner_assessment,
   } = result;
+
+  const isLegacySeal = Boolean(seal?.watermark_version && seal.watermark_version < 2);
+  const isV3Seal = Boolean((seal?.watermark_version || 0) >= 2);
+  const isSoftLineage = status === 'soft-lineage_only' || lineage_state === 'soft_lineage_only';
 
   const accent =
     status === 'verified' || status === 'authentic'
       ? 'text-[#4ECDC4]'
       : status === 'likely_verified' || status === 'inconclusive'
         ? 'text-[#FACC15]'
+        : isSoftLineage
+          ? 'text-[#D0B07A]'
         : status === 'revoked'
           ? 'text-red-500'
           : 'text-[#999999]';
@@ -85,6 +96,24 @@ export function VerifyResult({
           </>
         )}
 
+        {isSoftLineage && (
+          <>
+            <div className="w-12 h-12 rounded-full bg-[#D0B07A]/10 flex items-center justify-center">
+              <svg className="w-6 h-6 text-[#D0B07A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[#D0B07A]">
+                Lineage Confirmed
+              </h3>
+              <p className="text-sm text-[#666666]">
+                {message_ja || '強い signal は弱いですが、OWM の登録情報と系譜整合は残っています'}
+              </p>
+            </div>
+          </>
+        )}
+
         {(status === 'not_found' || status === 'unverifiable') && (
           <>
             <div className="w-12 h-12 rounded-full bg-[#666666]/10 flex items-center justify-center">
@@ -127,7 +156,13 @@ export function VerifyResult({
         <div className="bg-[#0D0D0D] rounded-lg p-4 border border-[#222222]">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-[#666666]">
-              {authenticity ? 'Authenticity Score' : matchedByPHash ? 'Image Similarity' : 'Confidence'}
+              {authenticity
+                ? isSoftLineage
+                  ? 'Lineage Confidence'
+                  : 'Authenticity Score'
+                : matchedByPHash
+                  ? 'Image Similarity'
+                  : 'Confidence'}
             </span>
             <span className={`text-sm font-medium ${accent}`}>
               {authenticity ? `${authenticity.score}%` : `${(confidence * 100).toFixed(1)}%`}
@@ -138,12 +173,17 @@ export function VerifyResult({
               className={`h-full rounded-full transition-all ${
                 (authenticity?.score || confidence * 100) >= 85 ? 'bg-[#4ECDC4]' :
                 (authenticity?.score || confidence * 100) >= 60 ? 'bg-[#FACC15]' :
+                isSoftLineage ? 'bg-[#D0B07A]' :
                 status === 'tamper_suspected' ? 'bg-red-500' : 'bg-[#666666]'
               }`}
               style={{ width: `${authenticity?.score || confidence * 100}%` }}
             />
           </div>
-          {authenticity?.summary ? (
+          {isLegacySeal ? (
+            <p className="text-xs text-[#666666] mt-2">
+              これは Aether Seal v3 以前の画像です。現在は台帳と系譜の登録情報を中心に照合しています。
+            </p>
+          ) : authenticity?.summary ? (
             <p className="text-xs text-[#666666] mt-2">{authenticity.summary}</p>
           ) : matchedByPHash ? (
             <p className="text-xs text-[#666666] mt-2">
@@ -157,6 +197,26 @@ export function VerifyResult({
       {(seal || creator || design) && (
         <div className="bg-[#0D0D0D] rounded-lg p-4 space-y-3 border border-[#222222]">
           <h4 className="font-medium text-[#E0E0E0]">Details</h4>
+
+          {(isLegacySeal || isV3Seal) && (
+            <div className={`rounded-lg border px-3 py-2 ${
+              isLegacySeal ? 'border-[#3B3124] bg-[#17130E]' : 'border-[#1F2A28] bg-[#0F1514]'
+            }`}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs tracking-[0.22em] text-[#BDB6AD] uppercase">Seal Profile</span>
+                <span className={`text-xs font-medium ${
+                  isLegacySeal ? 'text-[#D0B07A]' : 'text-[#4ECDC4]'
+                }`}>
+                  {isLegacySeal ? 'Legacy Seal' : 'Aether Seal v3'}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-5 text-[#7F7A73]">
+                {isLegacySeal
+                  ? '古い画像は registry-backed lineage を中心に検証します。新しい v3 画像ほど多層 signal は返りません。'
+                  : 'manifest・planner・lineage を含む Aether Seal v3 の多層検証が利用できます。'}
+              </p>
+            </div>
+          )}
 
           <div className="grid gap-2 text-sm">
             {creator && (
@@ -207,6 +267,30 @@ export function VerifyResult({
                 </span>
               </div>
             ) : null}
+
+            {lineage_state ? (
+              <div className="flex justify-between gap-4">
+                <span className="text-[#666666]">Lineage State</span>
+                <span className="text-right text-[#E0E0E0]">
+                  {lineage_state === 'hard_lineage_confirmed'
+                    ? 'Hard lineage confirmed'
+                    : lineage_state === 'hard_lineage_degraded'
+                      ? 'Hard lineage degraded'
+                      : lineage_state === 'soft_lineage_only'
+                        ? 'Soft lineage only'
+                        : lineage_state === 'lineage_broken'
+                          ? 'Lineage broken'
+                          : 'Lineage unknown'}
+                </span>
+              </div>
+            ) : null}
+
+            {confidence_bucket ? (
+              <div className="flex justify-between">
+                <span className="text-[#666666]">Confidence</span>
+                <span className="text-[#E0E0E0] capitalize">{confidence_bucket}</span>
+              </div>
+            ) : null}
           </div>
 
           {/* License Info */}
@@ -238,7 +322,10 @@ export function VerifyResult({
             <div className="mt-4 pt-4 border-t border-[#222222] space-y-2">
               <h5 className="text-sm font-medium text-[#E0E0E0]">Verifier Factors</h5>
               <div className="grid gap-2">
-                {authenticity.factors.slice(0, 4).map((factor) => (
+                {authenticity.factors
+                  .filter((factor) => !(isLegacySeal && ['manifest_payload', 'fragile_digest', 'lineage_continuity'].includes(factor.key) && factor.value === 0))
+                  .slice(0, 4)
+                  .map((factor) => (
                   <div key={factor.key} className="rounded-lg border border-[#222222] bg-[#111111] px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-[#BDB6AD]">{factor.label}</span>
@@ -248,6 +335,41 @@ export function VerifyResult({
                   </div>
                 ))}
               </div>
+            </div>
+          ) : null}
+
+          {(planner_assessment || reason_codes?.length || unsupported_cases?.length) ? (
+            <div className="mt-4 pt-4 border-t border-[#222222] space-y-3">
+              {planner_assessment ? (
+                <div>
+                  <h5 className="text-sm font-medium text-[#E0E0E0]">Planner Assessment</h5>
+                  <p className="mt-1 text-xs text-[#7F7A73]">
+                    {planner_assessment.qualityBand || 'unknown'} · {planner_assessment.note || 'region planning quality is included in the audit context'}
+                  </p>
+                </div>
+              ) : null}
+
+              {reason_codes?.length ? (
+                <div>
+                  <h5 className="text-sm font-medium text-[#E0E0E0]">Reason Codes</h5>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {reason_codes.slice(0, 6).map((code) => (
+                      <span key={code} className="rounded-full border border-[#2A2A2A] bg-[#111111] px-2.5 py-1 text-[10px] tracking-[0.16em] text-[#BDB6AD] uppercase">
+                        {code.replaceAll('_', ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {unsupported_cases?.length ? (
+                <div>
+                  <h5 className="text-sm font-medium text-[#E0E0E0]">Unsupported Cases</h5>
+                  <p className="mt-1 text-xs text-[#7F7A73]">
+                    {unsupported_cases.slice(0, 3).join(' / ')}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

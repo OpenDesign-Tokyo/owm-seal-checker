@@ -10,6 +10,7 @@ export type SealStatus =
   | 'revoked'
   | 'verified'
   | 'likely_verified'
+  | 'soft-lineage_only'
   | 'tamper_suspected'
   | 'unverifiable';
 
@@ -24,10 +25,21 @@ export interface AuthenticityFactor {
 }
 
 export interface AuthenticityReport {
-  status: 'verified' | 'likely_verified' | 'tamper_suspected' | 'revoked' | 'unverifiable';
+  status: 'verified' | 'likely_verified' | 'tamper_suspected' | 'revoked' | 'soft-lineage_only' | 'unverifiable';
   score: number;
   summary: string;
   factors: AuthenticityFactor[];
+}
+
+export interface PlannerAssessment {
+  plannerVersion?: string;
+  qualityBand?: 'strong' | 'balanced' | 'weak' | 'unknown';
+  preferredZoneCount?: number;
+  candidateCount?: number;
+  protectedCoverageRatio?: number;
+  averageContrast?: number;
+  averageEdgeDensity?: number;
+  note?: string;
 }
 
 export interface VerifyResponse {
@@ -48,6 +60,7 @@ export interface VerifyResponse {
     pipeline_mode: string;
     model_provider: string;
     model_name?: string | null;
+    watermark_version?: number | null;
     manifest_version?: number | null;
     authenticity_score?: number | null;
     verifier_summary?: string | null;
@@ -73,6 +86,11 @@ export interface VerifyResponse {
     descendantCount?: number;
   } | null;
   authenticity?: AuthenticityReport | null;
+  confidence_bucket?: 'high' | 'medium' | 'low' | 'none' | null;
+  reason_codes?: string[] | null;
+  unsupported_cases?: string[] | null;
+  lineage_state?: 'hard_lineage_confirmed' | 'hard_lineage_degraded' | 'soft_lineage_only' | 'lineage_broken' | 'lineage_unknown' | null;
+  planner_assessment?: PlannerAssessment | null;
 }
 
 export interface AetherSealCertificate {
