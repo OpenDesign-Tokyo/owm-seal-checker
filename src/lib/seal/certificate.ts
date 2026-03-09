@@ -57,12 +57,13 @@ interface CreateCertificateParams {
   sealRecord: SealRecord;
   confidence: number;
   displayName: string | null;
+  username: string | null;
 }
 
 export async function createSignedCertificate(
   params: CreateCertificateParams
 ): Promise<{ jws: string; certificate: AetherSealCertificate }> {
-  const { sealRecord, confidence, displayName } = params;
+  const { sealRecord, confidence, displayName, username } = params;
 
   const certificate: AetherSealCertificate = {
     type: 'OWM_AETHER_SEAL_CERT',
@@ -76,7 +77,8 @@ export async function createSignedCertificate(
     },
     creator: {
       userId: sealRecord.user_id,
-      displayName,
+      displayName: displayName || username,
+      username,
       profileUrl: `https://open-wardrobe-market.com/profile/${sealRecord.user_id}`
     },
     provenance: {

@@ -117,13 +117,15 @@ export async function POST(request: NextRequest) {
       created_at: seal.createdAt,
     };
 
-    const displayName = result.creator?.displayName || null;
+    const displayName = result.creator?.displayName || result.creator?.username || null;
+    const username = result.creator?.username || null;
 
     // 証明書発行
     const { jws, certificate } = await createSignedCertificate({
       sealRecord,
       confidence: 0.98,
-      displayName
+      displayName,
+      username,
     });
 
     return NextResponse.json(

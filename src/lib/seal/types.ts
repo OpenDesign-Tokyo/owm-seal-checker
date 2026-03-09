@@ -106,6 +106,7 @@ export interface AetherSealCertificate {
   creator: {
     userId: string;
     displayName: string | null;
+    username: string | null;
     profileUrl: string | null;
   };
   provenance: {

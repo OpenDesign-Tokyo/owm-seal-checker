@@ -96,6 +96,7 @@ function getCreatorName(result: VerifyResponse, certificate: CertificateResponse
     result.creator?.display_name ||
     result.creator?.username ||
     certificate?.certificate.creator.displayName ||
+    certificate?.certificate.creator.username ||
     '非公開または未設定'
   );
 }
@@ -270,15 +271,6 @@ export function VerifyResult({
             </div>
           )}
 
-          {(seal?.model_provider || seal?.model_name) && (
-            <div className="flex justify-between gap-4">
-              <span className="text-[#666666]">生成情報</span>
-              <span className="text-right text-[#E0E0E0]">
-                {[seal?.model_provider, seal?.model_name].filter(Boolean).join(' / ')}
-              </span>
-            </div>
-          )}
-
           {licenseLabel && (
             <div className="flex justify-between gap-4">
               <span className="text-[#666666]">利用条件</span>
@@ -341,7 +333,7 @@ export function VerifyResult({
             <div className="flex justify-between gap-4">
               <span className="text-[#666666]">クリエイター</span>
               <span className="text-right text-[#E0E0E0]">
-                {certificate.certificate.creator.displayName || creatorName}
+                {certificate.certificate.creator.displayName || certificate.certificate.creator.username || creatorName}
               </span>
             </div>
             <div className="flex justify-between gap-4">
